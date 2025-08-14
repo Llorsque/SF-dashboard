@@ -12,7 +12,10 @@ const state = {
     flags: {},
     impactFlags: {}
   },
-  charts: {}
+  charts: {},
+  targets: { vog:90, smoke:80, canteen:50 },
+  map: null,
+  mapLayer: null
 };
 
 const els = {
@@ -29,12 +32,23 @@ const els = {
   tableBody: document.querySelector('#clubsTable tbody'),
   exportCsv: document.getElementById('exportCsv'),
   fileClubs: document.getElementById('fileClubs'),
-  fileMembers: document.getElementById('fileMembers')
+  fileMembers: document.getElementById('fileMembers'),
+  targetVog: document.getElementById('targetVog'),
+  targetSmoke: document.getElementById('targetSmoke'),
+  targetCanteen: document.getElementById('targetCanteen'),
+  metricSelect: document.getElementById('metricSelect')
 };
 
 document.getElementById('year').textContent = new Date().getFullYear();
 
 // ------------------ Utilities ------------------
+// Municipality coordinates (approx) for circle map
+const muniCoords = {
+  "Opsterland": [53.055, 6.06],
+  "Weststellingwerf": [52.88, 6.00],
+  "Waadhoeke": [53.22, 5.62]
+};
+
 function parseYesNo(v){
   if (v == null) return false;
   const s = String(v).toLowerCase().trim();
@@ -121,6 +135,23 @@ function populateFilters(){
     });
   });
 
+  // Targets init & events
+  restoreTargets();
+  ['targetVog','targetSmoke','targetCanteen'].forEach(id => {
+    els[id].addEventListener('change', () => {
+      state.targets.vog = Number(els.targetVog.value)||0;
+      state.targets.smoke = Number(els.targetSmoke.value)||0;
+      state.targets.canteen = Number(els.targetCanteen.value)||0;
+      persistTargets();
+      renderKpis();
+    });
+  });
+
+  // Metric select
+  if(els.metricSelect){
+    els.metricSelect.addEventListener('change', renderCharts);
+  }
+
   els.resetFilters.addEventListener('click', () => {
     els.filterMunicipality.value = '';
     els.filterSport.value = '';
@@ -143,6 +174,22 @@ function populateFilters(){
 function persistFilters(){
   try { localStorage.setItem('sf_filters', JSON.stringify(state.filters)); } catch {}
 }
+
+function persistTargets(){
+  try { localStorage.setItem('sf_targets', JSON.stringify(state.targets)); } catch {}
+}
+function restoreTargets(){
+  try {
+    const raw = localStorage.getItem('sf_targets');
+    if(raw){
+      state.targets = JSON.parse(raw);
+    }
+  } catch {}
+  els.targetVog.value = state.targets.vog;
+  els.targetSmoke.value = state.targets.smoke;
+  els.targetCanteen.value = state.targets.canteen;
+}
+
 function restoreFilters(){
   try {
     const raw = localStorage.getItem('sf_filters');
@@ -196,11 +243,20 @@ function renderKpis(){
   els.kpiContrib.textContent = avg ? `€ ${avg}` : '—';
 
   const vogTrue = rows.filter(r => r.vog_mandatory).length;
-  els.kpiVog.textContent = rows.length ? `${pct(vogTrue, rows.length)}%` : '—';
+  const vogPct = rows.length ? pct(vogTrue, rows.length) : null;
+  els.kpiVog.textContent = vogPct!=null ? `${vogPct}%` : '—';
   const smokeTrue = rows.filter(r => r.smoke_free).length;
-  els.kpiSmoke.textContent = rows.length ? `${pct(smokeTrue, rows.length)}%` : '—';
+  const smokePct = rows.length ? pct(smokeTrue, rows.length) : null;
+  els.kpiSmoke.textContent = smokePct!=null ? `${smokePct}%` : '—';
   const healthyTrue = rows.filter(r => r.healthy_canteen).length;
-  els.kpiCanteen.textContent = rows.length ? `${pct(healthyTrue, rows.length)}%` : '—';
+  const canteenPct = rows.length ? pct(healthyTrue, rows.length) : null;
+  els.kpiCanteen.textContent = canteenPct!=null ? `${canteenPct}%` : '—';
+
+  // Color status
+  setKpiStatus(els.kpiVog.parentElement, vogPct, state.targets.vog);
+  setKpiStatus(els.kpiSmoke.parentElement, smokePct, state.targets.smoke);
+  setKpiStatus(els.kpiCanteen.parentElement, canteenPct, state.targets.canteen);
+
 }
 
 function groupCount(items, field){
@@ -226,16 +282,23 @@ function renderCharts(){
   const values = flags.map(f => rows.filter(r => r[f]).length);
   drawBar('chartPolicy', labels, values, 'Aantal met kenmerk');
 
-  // Members time series
+  // Members time series by selected metric
+  const metric = els.metricSelect ? els.metricSelect.value : 'total_members';
   const clubIds = new Set(rows.map(r => r.id));
   const byYear = {};
   for(const row of state.memberships){
     if(!clubIds.has(row.club_id)) continue;
-    byYear[row.year] = (byYear[row.year] || 0) + row.total_members;
+    byYear[row.year] = (byYear[row.year] || 0) + (row[metric] || 0);
   }
   const years = Object.keys(byYear).map(y=>Number(y)).sort((a,b)=>a-b);
   const totals = years.map(y => byYear[y]);
-  drawLine('chartMembers', years, totals, 'Leden totaal');
+  const labelMap = { total_members:'Leden totaal', youth_members:'Jeugdleden', volunteers_count:'Vrijwilligers' };
+  drawLine('chartMembers', years, totals, labelMap[metric] || 'Leden');
+
+  // Map & sport distribution
+  renderMap();
+  renderSports();
+  renderQuality();
 }
 
 function drawBar(canvasId, labels, data, label){
@@ -336,6 +399,95 @@ function handleLoadCustomCsv(kind, ev){
     renderAll();
   };
   reader.readAsText(file, 'utf-8');
+}
+
+
+function setKpiStatus(kpiEl, value, target){
+  kpiEl.classList.remove('ok','warn','bad');
+  if(value==null){ return; }
+  if(value >= target) kpiEl.classList.add('ok');
+  else if(value >= Math.max(0, target-10)) kpiEl.classList.add('warn');
+  else kpiEl.classList.add('bad');
+}
+
+function ensureMap(){
+  if(!document.getElementById('map')) return;
+  if(state.map) return;
+  state.map = L.map('map', { scrollWheelZoom:false }).setView([53.1, 5.9], 8);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(state.map);
+}
+
+function renderMap(){
+  if(!document.getElementById('map')) return;
+  ensureMap();
+  if(state.mapLayer){
+    state.map.removeLayer(state.mapLayer);
+    state.mapLayer = null;
+  }
+  const rows = filteredClubs();
+  const counts = {};
+  rows.forEach(r => { counts[r.municipality] = (counts[r.municipality]||0)+1; });
+  const layer = L.layerGroup();
+  Object.entries(counts).forEach(([muni,count]) => {
+    const coord = muniCoords[muni];
+    if(!coord) return;
+    const radius = 10000 + count * 1500;
+    const circle = L.circle(coord, { radius });
+    circle.bindTooltip(`${muni}: ${count}`);
+    layer.addLayer(circle);
+  });
+  layer.addTo(state.map);
+  state.mapLayer = layer;
+}
+
+function renderSports(){
+  const rows = filteredClubs();
+  const bySport = groupCount(rows, 'sport');
+  drawDoughnut('chartSports', bySport.labels, bySport.values, 'Clubs');
+}
+
+function drawDoughnut(canvasId, labels, data, label){
+  const ctx = document.getElementById(canvasId);
+  if(!ctx) return;
+  const prev = state.charts[canvasId];
+  if(prev){ prev.destroy(); }
+  state.charts[canvasId] = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ label, data }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } } }
+  });
+}
+
+function renderQuality(){
+  const ul = document.getElementById('qualityList');
+  if(!ul) return;
+  const rows = filteredClubs();
+  const issues = [];
+  rows.forEach(r => {
+    if(r.members < r.volunteers){
+      issues.push({ type:'DATA', msg:`${r.club_name}: meer vrijwilligers (${r.volunteers}) dan leden (${r.members}).`});
+    }
+    if(r.vog_mandatory && r.volunteers < 5){
+      issues.push({ type:'RISICO', msg:`${r.club_name}: VOG verplicht maar weinig vrijwilligers (${r.volunteers}).`});
+    }
+    if(!r.vcper && !r.safe_sport_env){
+      issues.push({ type:'VEILIGHEID', msg:`${r.club_name}: geen VCP en geen veilig sportklimaat gemarkeerd.`});
+    }
+    if(r.contribution_senior && r.contribution_senior < 50){
+      issues.push({ type:'CHECK', msg:`${r.club_name}: zeer lage contributie (€ ${r.contribution_senior}).`});
+    }
+  });
+  ul.innerHTML = '';
+  issues.slice(0, 12).forEach(it => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="tag">${it.type}</span>${it.msg}`;
+    ul.appendChild(li);
+  });
+  if(issues.length === 0){
+    ul.innerHTML = '<li><span class="tag">OK</span>Geen opvallende issues in de gefilterde selectie.</li>';
+  }
 }
 
 // Start

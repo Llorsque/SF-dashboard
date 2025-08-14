@@ -72,3 +72,13 @@ tbody td{padding:10px;border-bottom:1px solid #eef2f7}
   .kpis{grid-template-columns:1fr 1fr}
   .cards{grid-template-columns:1fr}
 }
+
+.kpi.ok .kpi-value{color:#1f9d55}
+.kpi.warn .kpi-value{color:#b7791f}
+.kpi.bad .kpi-value{color:#b91c1c}
+
+#metricSelect{padding:8px 10px;border-radius:10px;border:1px solid #dce1ea}
+
+.quality-list{margin:0;padding:0 0 0 18px;display:grid;gap:6px}
+.quality-list li{line-height:1.4}
+.quality-list li .tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 6px;border-radius:6px;background:#fff;border:1px solid #eef2f7;margin-right:6px}

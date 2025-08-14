@@ -8,6 +8,8 @@
   <link rel="icon" href="assets/logo.svg" />
   <link rel="stylesheet" href="styles.css" />
   <!-- Libraries -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
@@ -67,9 +69,17 @@
         </div>
       </div>
       <div class="filter-group">
+        <label>Doelwaarden (targets)</label>
+        <div class="checklist">
+          <label>VOG doel (%) <input type="number" id="targetVog" min="0" max="100" step="5" value="90"></label>
+          <label>Rookvrij doel (%) <input type="number" id="targetSmoke" min="0" max="100" step="5" value="80"></label>
+          <label>Gezonde kantine doel (%) <input type="number" id="targetCanteen" min="0" max="100" step="5" value="50"></label>
+        </div>
+      </div>
+      <div class="filter-group">
         <button id="resetFilters" class="secondary">Reset</button>
       </div>
-      <p class="hint">Tip: filters worden onthouden in je browser.</p>
+      <p class="hint">Tip: filters en doelwaarden worden onthouden in je browser.</p>
     </aside>
 
     <section class="content">
@@ -108,8 +118,25 @@
         </article>
 
         <article class="card">
-          <header><h3>Ledenontwikkeling (totaal)</h3></header>
+          <header style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+            <h3 style="margin:0;">Ledenontwikkeling</h3>
+            <select id="metricSelect" title="Kies metric">
+              <option value="total_members" selected>Totaal</option>
+              <option value="youth_members">Jeugd</option>
+              <option value="volunteers_count">Vrijwilligers</option>
+            </select>
+          </header>
           <canvas id="chartMembers" aria-label="Lijn grafiek ledenontwikkeling"></canvas>
+        </article>
+
+        <article class="card">
+          <header><h3>Kaart — clubs per gemeente</h3></header>
+          <div id="map" style="height:360px;border-radius:12px; overflow:hidden;"></div>
+        </article>
+
+        <article class="card">
+          <header><h3>Verdeling per sport</h3></header>
+          <canvas id="chartSports" aria-label="Doughnut verdeling sport"></canvas>
         </article>
       </section>
 
@@ -137,6 +164,13 @@
             <tbody></tbody>
           </table>
         </div>
+      </section>
+    </section>
+
+    <section class="content">
+      <section class="card">
+        <header><h3>Datakwaliteit & waarschuwingen</h3></header>
+        <ul id="qualityList" class="quality-list"></ul>
       </section>
     </section>
   </main>

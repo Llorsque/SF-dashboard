@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sport Fryslân – Verenigingen Monitor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" href="assets/logo.svg" />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <img src="assets/logo.svg" alt="Sport Fryslân logo" />
+      <h1>Verenigingen Monitor</h1>
+    </div>
+    <div class="header-actions">
+      <label class="file-btn" title="Laad nieuwe clubs.csv">
+        <input type="file" id="fileClubs" accept=".csv" />
+        Clubs CSV laden
+      </label>
+      <label class="file-btn" title="Laad memberships.csv">
+        <input type="file" id="fileMembers" accept=".csv" />
+        Memberships CSV laden
+      </label>
+      <button id="exportCsv" class="secondary">Exporteer gefilterde CSV</button>
+      <a class="secondary" href="data/clubs.csv" download>Download dummy data</a>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="filters">
+      <h2>Filters</h2>
+      <div class="filter-group">
+        <label for="filterMunicipality">Gemeente</label>
+        <select id="filterMunicipality">
+          <option value="">Alle</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filterSport">Sport</label>
+        <select id="filterSport">
+          <option value="">Alle</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Status</label>
+        <div class="checklist">
+          <label><input type="checkbox" data-flag="vcper" /> VCP'er aanwezig</label>
+          <label><input type="checkbox" data-flag="vog_mandatory" /> VOG verplicht</label>
+          <label><input type="checkbox" data-flag="smoke_free" /> Rookvrij</label>
+          <label><input type="checkbox" data-flag="healthy_canteen" /> Gezonde kantine</label>
+          <label><input type="checkbox" data-flag="ynbeweging" /> Actief op Ynbeweging</label>
+        </div>
+      </div>
+      <div class="filter-group">
+        <label>Impactgebieden</label>
+        <div class="checklist">
+          <label><input type="checkbox" data-flag="impact_4_12" /> 4–12 jaar</label>
+          <label><input type="checkbox" data-flag="impact_12_18" /> 12–18 jaar</label>
+          <label><input type="checkbox" data-flag="impact_55_plus" /> 55+ jaar</label>
+          <label><input type="checkbox" data-flag="impact_aangepast_sporten" /> Aangepast sporten</label>
+          <label><input type="checkbox" data-flag="oldstars" /> OldStars</label>
+        </div>
+      </div>
+      <div class="filter-group">
+        <button id="resetFilters" class="secondary">Reset</button>
+      </div>
+      <p class="hint">Tip: filters worden onthouden in je browser.</p>
+    </aside>
+
+    <section class="content">
+      <section class="kpis" aria-label="Kerncijfers">
+        <div class="kpi">
+          <div class="kpi-label">Verenigingen</div>
+          <div id="kpiClubs" class="kpi-value">—</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Gem. contributie (senior)</div>
+          <div id="kpiContrib" class="kpi-value">—</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">% VOG verplicht</div>
+          <div id="kpiVog" class="kpi-value">—</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">% Rookvrij</div>
+          <div id="kpiSmoke" class="kpi-value">—</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">% Gezonde kantine</div>
+          <div id="kpiCanteen" class="kpi-value">—</div>
+        </div>
+      </section>
+
+      <section class="cards">
+        <article class="card">
+          <header><h3>Verenigingen per gemeente</h3></header>
+          <canvas id="chartByMunicipality" aria-label="Bar chart verenigingen per gemeente"></canvas>
+        </article>
+
+        <article class="card">
+          <header><h3>Adoptie van beleid</h3></header>
+          <canvas id="chartPolicy" aria-label="Bar chart beleidsindicatoren"></canvas>
+        </article>
+
+        <article class="card">
+          <header><h3>Ledenontwikkeling (totaal)</h3></header>
+          <canvas id="chartMembers" aria-label="Lijn grafiek ledenontwikkeling"></canvas>
+        </article>
+      </section>
+
+      <section class="card table-card">
+        <header class="table-header">
+          <h3>Verenigingen (tabel)</h3>
+          <input id="search" type="search" placeholder="Zoek op naam, sport of plaats…" aria-label="Zoeken" />
+        </header>
+        <div class="table-wrap">
+          <table id="clubsTable">
+            <thead>
+              <tr>
+                <th>Naam</th>
+                <th>Sport</th>
+                <th>Gemeente</th>
+                <th>Leden</th>
+                <th>Vrijwilligers</th>
+                <th>VCP</th>
+                <th>VOG</th>
+                <th>Rookvrij</th>
+                <th>Gezonde kantine</th>
+                <th>Contributie (€)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>© <span id="year"></span> Sport Fryslân · Huisstijl: Archivo, #212945 en #52E8E8 · <a href="README.md">Handleiding</a></p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

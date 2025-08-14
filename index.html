@@ -8,8 +8,8 @@
   <link rel="icon" href="assets/logo.svg" />
   <link rel="stylesheet" href="styles.css" />
   <!-- Libraries -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
@@ -29,156 +29,179 @@
         Memberships CSV laden
       </label>
       <button id="exportCsv" class="secondary">Exporteer gefilterde CSV</button>
-      <a class="secondary" href="data/clubs.csv" download>Download dummy data</a>
+      <a class="secondary" href="data/clubs.csv" download>Dummy data</a>
     </div>
   </header>
 
-  <main class="layout">
-    <aside class="filters">
-      <h2>Filters</h2>
-      <div class="filter-group">
-        <label for="filterMunicipality">Gemeente</label>
-        <select id="filterMunicipality">
-          <option value="">Alle</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label for="filterSport">Sport</label>
-        <select id="filterSport">
-          <option value="">Alle</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label>Status</label>
-        <div class="checklist">
-          <label><input type="checkbox" data-flag="vcper" /> VCP'er aanwezig</label>
-          <label><input type="checkbox" data-flag="vog_mandatory" /> VOG verplicht</label>
-          <label><input type="checkbox" data-flag="smoke_free" /> Rookvrij</label>
-          <label><input type="checkbox" data-flag="healthy_canteen" /> Gezonde kantine</label>
-          <label><input type="checkbox" data-flag="ynbeweging" /> Actief op Ynbeweging</label>
-        </div>
-      </div>
-      <div class="filter-group">
-        <label>Impactgebieden</label>
-        <div class="checklist">
-          <label><input type="checkbox" data-flag="impact_4_12" /> 4–12 jaar</label>
-          <label><input type="checkbox" data-flag="impact_12_18" /> 12–18 jaar</label>
-          <label><input type="checkbox" data-flag="impact_55_plus" /> 55+ jaar</label>
-          <label><input type="checkbox" data-flag="impact_aangepast_sporten" /> Aangepast sporten</label>
-          <label><input type="checkbox" data-flag="oldstars" /> OldStars</label>
-        </div>
-      </div>
-      <div class="filter-group">
-        <label>Doelwaarden (targets)</label>
-        <div class="checklist">
-          <label>VOG doel (%) <input type="number" id="targetVog" min="0" max="100" step="5" value="90"></label>
-          <label>Rookvrij doel (%) <input type="number" id="targetSmoke" min="0" max="100" step="5" value="80"></label>
-          <label>Gezonde kantine doel (%) <input type="number" id="targetCanteen" min="0" max="100" step="5" value="50"></label>
-        </div>
-      </div>
-      <div class="filter-group">
-        <button id="resetFilters" class="secondary">Reset</button>
-      </div>
-      <p class="hint">Tip: filters en doelwaarden worden onthouden in je browser.</p>
-    </aside>
+  <div class="app">
+    <nav class="sidebar">
+      <a data-view="dashboard" class="nav-item active">Dashboard</a>
+      <a data-view="clubs" class="nav-item">Clubs</a>
+      <a data-view="map" class="nav-item">Kaart</a>
+      <a data-view="rapportage" class="nav-item">Rapportage</a>
+    </nav>
 
-    <section class="content">
-      <section class="kpis" aria-label="Kerncijfers">
-        <div class="kpi">
-          <div class="kpi-label">Verenigingen</div>
-          <div id="kpiClubs" class="kpi-value">—</div>
-        </div>
-        <div class="kpi">
-          <div class="kpi-label">Gem. contributie (senior)</div>
-          <div id="kpiContrib" class="kpi-value">—</div>
-        </div>
-        <div class="kpi">
-          <div class="kpi-label">% VOG verplicht</div>
-          <div id="kpiVog" class="kpi-value">—</div>
-        </div>
-        <div class="kpi">
-          <div class="kpi-label">% Rookvrij</div>
-          <div id="kpiSmoke" class="kpi-value">—</div>
-        </div>
-        <div class="kpi">
-          <div class="kpi-label">% Gezonde kantine</div>
-          <div id="kpiCanteen" class="kpi-value">—</div>
+    <main class="main">
+      <!-- DASHBOARD VIEW -->
+      <section class="view" id="view-dashboard" data-view="dashboard">
+        <div class="layout">
+          <aside class="filters">
+            <h2>Filters</h2>
+            <div class="filter-group">
+              <label for="filterMunicipality">Gemeente</label>
+              <select id="filterMunicipality"><option value="">Alle</option></select>
+            </div>
+            <div class="filter-group">
+              <label for="filterSport">Sport</label>
+              <select id="filterSport"><option value="">Alle</option></select>
+            </div>
+            <div class="filter-group">
+              <label>Status</label>
+              <div class="checklist">
+                <label><input type="checkbox" data-flag="vcper" /> VCP'er aanwezig</label>
+                <label><input type="checkbox" data-flag="vog_mandatory" /> VOG verplicht</label>
+                <label><input type="checkbox" data-flag="smoke_free" /> Rookvrij</label>
+                <label><input type="checkbox" data-flag="healthy_canteen" /> Gezonde kantine</label>
+                <label><input type="checkbox" data-flag="ynbeweging" /> Actief op Ynbeweging</label>
+              </div>
+            </div>
+            <div class="filter-group">
+              <label>Impactgebieden</label>
+              <div class="checklist">
+                <label><input type="checkbox" data-flag="impact_4_12" /> 4–12 jaar</label>
+                <label><input type="checkbox" data-flag="impact_12_18" /> 12–18 jaar</label>
+                <label><input type="checkbox" data-flag="impact_55_plus" /> 55+ jaar</label>
+                <label><input type="checkbox" data-flag="impact_aangepast_sporten" /> Aangepast sporten</label>
+                <label><input type="checkbox" data-flag="oldstars" /> OldStars</label>
+              </div>
+            </div>
+            <div class="filter-group">
+              <label>Doelwaarden</label>
+              <div class="checklist">
+                <label>VOG doel (%%) <input type="number" id="targetVog" min="0" max="100" step="5" value="90"></label>
+                <label>Rookvrij doel (%%) <input type="number" id="targetSmoke" min="0" max="100" step="5" value="80"></label>
+                <label>Gezonde kantine doel (%%) <input type="number" id="targetCanteen" min="0" max="100" step="5" value="50"></label>
+              </div>
+            </div>
+            <div class="filter-group"><button id="resetFilters" class="secondary">Reset</button></div>
+            <p class="hint">Filters & doelen worden onthouden.</p>
+          </aside>
+
+          <section class="content">
+            <section class="kpis">
+              <div class="kpi"><div class="kpi-label">Verenigingen</div><div id="kpiClubs" class="kpi-value">—</div></div>
+              <div class="kpi"><div class="kpi-label">Gem. contributie</div><div id="kpiContrib" class="kpi-value">—</div></div>
+              <div class="kpi"><div class="kpi-label">%% VOG</div><div id="kpiVog" class="kpi-value">—</div></div>
+              <div class="kpi"><div class="kpi-label">%% Rookvrij</div><div id="kpiSmoke" class="kpi-value">—</div></div>
+              <div class="kpi"><div class="kpi-label">%% Gezonde kantine</div><div id="kpiCanteen" class="kpi-value">—</div></div>
+            </section>
+
+            <section class="cards">
+              <article class="card">
+                <header><h3>Verenigingen per gemeente</h3></header>
+                <canvas id="chartByMunicipality"></canvas>
+              </article>
+              <article class="card">
+                <header><h3>Adoptie van beleid</h3></header>
+                <canvas id="chartPolicy"></canvas>
+              </article>
+              <article class="card">
+                <header style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+                  <h3 style="margin:0;">Ledenontwikkeling</h3>
+                  <select id="metricSelect">
+                    <option value="total_members" selected>Totaal</option>
+                    <option value="youth_members">Jeugd</option>
+                    <option value="volunteers_count">Vrijwilligers</option>
+                  </select>
+                </header>
+                <canvas id="chartMembers"></canvas>
+              </article>
+              <article class="card">
+                <header><h3>Kaart — clubs per gemeente</h3></header>
+                <div id="map" style="height:340px;border-radius:12px; overflow:hidden;"></div>
+              </article>
+              <article class="card">
+                <header><h3>Verdeling per sport</h3></header>
+                <canvas id="chartSports"></canvas>
+              </article>
+            </section>
+          </section>
         </div>
       </section>
 
-      <section class="cards">
-        <article class="card">
-          <header><h3>Verenigingen per gemeente</h3></header>
-          <canvas id="chartByMunicipality" aria-label="Bar chart verenigingen per gemeente"></canvas>
-        </article>
+      <!-- CLUBS VIEW -->
+      <section class="view hidden" id="view-clubs" data-view="clubs">
+        <div class="clubs-layout">
+          <section class="card table-card">
+            <header class="table-header">
+              <h3>Clubs</h3>
+              <div class="table-actions">
+                <input id="search" type="search" placeholder="Zoek op naam, sport of plaats…" aria-label="Zoeken" />
+                <select id="pageSize">
+                  <option value="10" selected>10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                </select>
+              </div>
+            </header>
+            <div class="table-wrap">
+              <table id="clubsTable">
+                <thead>
+                  <tr>
+                    <th>Naam</th>
+                    <th>Sport</th>
+                    <th>Gemeente</th>
+                    <th>Leden</th>
+                    <th>Vrijwilligers</th>
+                    <th>VCP</th>
+                    <th>VOG</th>
+                    <th>Rookvrij</th>
+                    <th>Gezonde kantine</th>
+                    <th>Contributie (€)</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <footer class="table-footer">
+              <button id="prevPage" class="secondary">‹</button>
+              <span id="pageInfo"></span>
+              <button id="nextPage" class="secondary">›</button>
+            </footer>
+          </section>
 
-        <article class="card">
-          <header><h3>Adoptie van beleid</h3></header>
-          <canvas id="chartPolicy" aria-label="Bar chart beleidsindicatoren"></canvas>
-        </article>
-
-        <article class="card">
-          <header style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-            <h3 style="margin:0;">Ledenontwikkeling</h3>
-            <select id="metricSelect" title="Kies metric">
-              <option value="total_members" selected>Totaal</option>
-              <option value="youth_members">Jeugd</option>
-              <option value="volunteers_count">Vrijwilligers</option>
-            </select>
-          </header>
-          <canvas id="chartMembers" aria-label="Lijn grafiek ledenontwikkeling"></canvas>
-        </article>
-
-        <article class="card">
-          <header><h3>Kaart — clubs per gemeente</h3></header>
-          <div id="map" style="height:360px;border-radius:12px; overflow:hidden;"></div>
-        </article>
-
-        <article class="card">
-          <header><h3>Verdeling per sport</h3></header>
-          <canvas id="chartSports" aria-label="Doughnut verdeling sport"></canvas>
-        </article>
-      </section>
-
-      <section class="card table-card">
-        <header class="table-header">
-          <h3>Verenigingen (tabel)</h3>
-          <input id="search" type="search" placeholder="Zoek op naam, sport of plaats…" aria-label="Zoeken" />
-        </header>
-        <div class="table-wrap">
-          <table id="clubsTable">
-            <thead>
-              <tr>
-                <th>Naam</th>
-                <th>Sport</th>
-                <th>Gemeente</th>
-                <th>Leden</th>
-                <th>Vrijwilligers</th>
-                <th>VCP</th>
-                <th>VOG</th>
-                <th>Rookvrij</th>
-                <th>Gezonde kantine</th>
-                <th>Contributie (€)</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+          <aside class="card klantenkaart" id="klantenkaart">
+            <header><h3>Klantenkaart</h3></header>
+            <div class="kk-body">
+              <p class="muted">Selecteer een vereniging in de tabel.</p>
+            </div>
+          </aside>
         </div>
       </section>
-    </section>
 
-    <section class="content">
-      <section class="card">
-        <header><h3>Datakwaliteit & waarschuwingen</h3></header>
-        <ul id="qualityList" class="quality-list"></ul>
+      <!-- MAP VIEW -->
+      <section class="view hidden" id="view-map" data-view="map">
+        <section class="card">
+          <header><h3>Kaart — Friesland</h3></header>
+          <div id="map2" style="height:520px;border-radius:12px; overflow:hidden;"></div>
+        </section>
       </section>
-    </section>
-  </main>
+
+      <!-- RAPPORTAGE VIEW -->
+      <section class="view hidden" id="view-rapportage" data-view="rapportage">
+        <section class="card">
+          <header><h3>Datakwaliteit & waarschuwingen</h3></header>
+          <ul id="qualityList" class="quality-list"></ul>
+        </section>
+      </section>
+    </main>
+  </div>
 
   <footer class="site-footer">
-    <p>© <span id="year"></span> Sport Fryslân · Huisstijl: Archivo, #212945 en #52E8E8 · <a href="README.md">Handleiding</a></p>
+    <p>© <span id="year"></span> Sport Fryslân · Archivo · #212945 / #52E8E8 · <a href="README.md">Handleiding</a></p>
   </footer>
 
+  <script>window.FRYS_COORDS = {"Leeuwarden": [53.201, 5.8], "S\u00fadwest-Frysl\u00e2n": [53.058, 5.527], "Smallingerland": [53.11, 6.095], "Heerenveen": [52.959, 5.926], "Noardeast-Frysl\u00e2n": [53.356, 6.054], "De Fryske Marren": [52.894, 5.717], "Achtkarspelen": [53.24, 6.133], "Tytsjerksteradiel": [53.21, 5.99], "Opsterland": [53.055, 6.06], "Weststellingwerf": [52.88, 6.0], "Waadhoeke": [53.22, 5.62], "Dantumadiel": [53.29, 6.01], "Harlingen": [53.174, 5.422]};</script>
   <script src="script.js"></script>
 </body>
 </html>
